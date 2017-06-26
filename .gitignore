@@ -1,1 +1,10 @@
 *.o
+# kernel
+*.ko
+*.mod.c
+*.order
+*.symvers
+*.cmd
+*.tmp_versions
+
+clean.sh

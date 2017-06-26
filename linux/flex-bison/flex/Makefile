@@ -4,4 +4,4 @@ all:
 	./example
 
 clean:
-	rm example lex.yy.c
+	rm example lex.yy.c -rf
