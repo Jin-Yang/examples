@@ -7,6 +7,16 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#if 0
+if (!gcry_control (GCRYCTL_ANY_INITIALIZATION_P))
+{
+    gcry_check_version(NULL); /* before calling any other functions */
+    gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+    gcry_control (GCRYCTL_INIT_SECMEM, 32768, 0);
+    gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
+}
+#endif
+
 static void aes_test(int gcry_mode, char * init_vector)
 {
     #define GCRY_CIPHER GCRY_CIPHER_AES256   // Pick the cipher here
@@ -14,6 +24,14 @@ static void aes_test(int gcry_mode, char * init_vector)
     gcry_error_t     gcry_ret;
     gcry_cipher_hd_t cipher_hd;
     size_t           index;
+
+   /* http://lists.gnupg.org/pipermail/gcrypt-devel/2003-August/000458.html
+    * Because you can't know in a library whether another library has
+    * already initialized the library
+    */
+    if (!gcry_control (GCRYCTL_ANY_INITIALIZATION_P)) {
+        gcry_check_version(NULL); /* before calling any other functions */
+    }
 
     printf("gcry_mode     = %s\n", gcry_mode == GCRY_CIPHER_MODE_ECB ? "ECB" : "CBC");
 

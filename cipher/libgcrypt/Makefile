@@ -1,6 +1,6 @@
 CFLAGS =-std=gnu99 -g -Wall `libgcrypt-config --cflags`
 LDFLAGS =`libgcrypt-config --libs`
-PROCS = hash symmetric
+PROCS = hash symmetric pbkdf
 
 all: ${PROCS}
 	@echo "just for file test" > hash_test.txt
