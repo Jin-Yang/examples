@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 	char	sendline[MAXLINE], recvline[MAXLINE + 1];
 
 	int					ret, sockfd;
-	struct sockaddr_in	servaddr;
+    struct sockaddr_in	servaddr;
 
 
 	// UDP socket.
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	ret = inet_pton(AF_INET, "127.0.0.1", &servaddr.sin_addr); // ipv4
 	if (ret <= 0) {
 		if (ret == 0)
-			fprintf(stderr, "Not in presentation format.\n");
+            fprintf(stderr, "Not in presentation format.\n");
 		else
 			perror("inet_pton");
 		exit(EXIT_FAILURE);
