@@ -1,10 +1,11 @@
 CFLAGS =-g -Wall
 LDFLAGS =
-PROCS = const_pointer
+PROCS = const_pointer align getopt getopt_long libdl
 
 all: ${PROCS}
 
-#misc: misc.o
+libdl: libdl.o
+	gcc ${LDFLAGS} -rdynamic -ldl -o $@ $<
 
 %: %.o
 	gcc ${LDFLAGS} -o $@ $<
