@@ -1,0 +1,3 @@
+$#include "HelloWorld.h"
+extern int g_Arr[10]@Arr;
+void print_sth(lua_State* L);

@@ -26,108 +26,107 @@
 // Write "n" bytes to a descriptor.
 ssize_t	writen(int fd, const void *vptr, size_t n)
 {
-	size_t		nleft;
-	ssize_t		nwritten;
-	const char	*ptr;
+        size_t          nleft;
+        ssize_t         nwritten;
+        const char      *ptr;
 
-	ptr = vptr;
-	nleft = n;
-	while (nleft > 0) {
-		if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
-			if (nwritten < 0 && errno == EINTR)
-				nwritten = 0;  // and call write() again
-			else
-				return(-1);	// error
-		}
+        ptr = vptr;
+        nleft = n;
+        while (nleft > 0) {
+                if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
+                        if (nwritten < 0 && errno == EINTR)
+                                nwritten = 0;   // and call write() again
+                        else
+                                return(-1);     // error
+                }
 
-		nleft -= nwritten;
-		ptr   += nwritten;
-	}
-	return(n);
+                nleft -= nwritten;
+                ptr   += nwritten;
+        }
+        return(n);
 }
 
 static int make_socket_non_blocking (int sfd)
 {
-  int flags, s;
+        int flags, s;
 
-  flags = fcntl (sfd, F_GETFL, 0); // Get the flag.
-  if (flags == -1) {
-     perror ("fcntl");
-     return -1;
-  }
+        flags = fcntl (sfd, F_GETFL, 0); // Get the flag.
+        if (flags == -1) {
+                perror ("fcntl");
+                return -1;
+        }
 
-  flags |= O_NONBLOCK;
-  s = fcntl (sfd, F_SETFL, flags); // And set it.
-  if (s == -1) {
-     perror ("fcntl");
-     return -1;
-  }
+        flags |= O_NONBLOCK;
+        s = fcntl (sfd, F_SETFL, flags); // And set it.
+        if (s == -1) {
+                perror ("fcntl");
+                return -1;
+        }
 
-  return 0;
+        return 0;
 }
 
 
 int main (int argc, char *argv[])
 {
-	int					listenfd, sockfd, opt = 1;
-    char                cliip[16];
-	socklen_t			clilen;
-	struct sockaddr_in	cliaddr, servaddr;
-    ssize_t             n;
-    char                buf[MAXLINE];
+        int                     listenfd, sockfd, opt = 1;
+        char                    cliip[16];
+        socklen_t               clilen;
+        struct sockaddr_in      cliaddr, servaddr;
+        ssize_t                 n;
+        char                    buf[MAXLINE];
+        int                     i, done, efd;
+        struct epoll_event      event;
+        struct epoll_event*     events;
 
-    int                 i, done, efd;
-    struct epoll_event  event;
-    struct epoll_event* events;
+        // Buffer where events are returned
+        events = calloc (MAXEVENTS, sizeof event);
 
-    // Buffer where events are returned
-    events = calloc (MAXEVENTS, sizeof event);
+        // Apply for TCP socket.
+        if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                perror("socket");
+                exit(EXIT_FAILURE);
+        }
 
-	// Apply for TCP socket.
-	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket");
-		exit(EXIT_FAILURE);
-	}
+        // When server quit first, the address can be used immediately.
+        if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1) {
+                perror("setsockopt");
+                exit(EXIT_FAILURE);
+        }
 
-    // When server quit first, the address can be used immediately.
-    if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1) {
-        perror("setsockopt");
-		exit(EXIT_FAILURE);
-    }
+        // Set the socket.
+        memset(&servaddr, 0, sizeof(servaddr));
+        servaddr.sin_family = AF_INET;                // AF-address family. PF-protocol family.
+        servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // "0.0.0.0"
+        servaddr.sin_port   = htons(LISTEN_PORT);
 
-	// Set the socket.
-	memset(&servaddr, 0, sizeof(servaddr));
-	servaddr.sin_family = AF_INET; 	              // AF-address family. PF-protocol family.
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // "0.0.0.0"
-	servaddr.sin_port   = htons(LISTEN_PORT);
+        if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
+                perror("bind");
+                exit(EXIT_FAILURE);
+        }
 
-	if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-		perror("bind");
-		exit(EXIT_FAILURE);
-	}
+        if (make_socket_non_blocking (listenfd) == -1) {
+                exit(EXIT_FAILURE);
+        }
 
-    if (make_socket_non_blocking (listenfd) == -1) {
-		exit(EXIT_FAILURE);
-    }
+        if (listen(listenfd, 5) < 0) {
+                perror("listen");
+                exit(EXIT_FAILURE);
+        }
+        printf("Listening on port %d, epoll version\n", LISTEN_PORT);
 
-	if (listen(listenfd, 5) < 0) {
-		perror("listen");
-		exit(EXIT_FAILURE);
-	}
-    printf("Listening on port %d, epoll version\n", LISTEN_PORT);
+        // Same with epoll_create(), except the argument size is ignored.
+        if ((efd = epoll_create1(0)) == -1) {
+                perror ("epoll_create");
+                exit(EXIT_FAILURE);
+        }
 
-    // Same with epoll_create(), except the argument size is ignored.
-    if ((efd = epoll_create1(0)) == -1) {
-        perror ("epoll_create");
-		exit(EXIT_FAILURE);
-    }
-
-    event.data.fd = listenfd;
-    event.events = EPOLLIN;// | EPOLLET;
-    if (epoll_ctl(efd, EPOLL_CTL_ADD, listenfd, &event) == -1) {
-        perror("epoll_ctl");
-		exit(EXIT_FAILURE);
-    }
+        event.data.fd = listenfd;
+        event.events = EPOLLIN;// | EPOLLET;
+        if (epoll_ctl(efd, EPOLL_CTL_ADD, listenfd, &event) == -1) {
+                perror("epoll_ctl");
+                exit(EXIT_FAILURE);
+        }
 
     // The event loop
     while (1) {

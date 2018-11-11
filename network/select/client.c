@@ -104,7 +104,7 @@ ssize_t readline(int fd, void *vptr, size_t maxlen)
 	char		c, *ptr;
 
 	ptr = vptr;
-	for (n = 1; n < maxlen; n++) {
+	for (n = 1; n < (ssize_t)maxlen; n++) {
 		if ((rc = my_read(fd, &c)) == 1) {
 			*ptr++ = c;
 			if (c == '\n')

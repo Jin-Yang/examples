@@ -42,7 +42,7 @@ int main (void)
     ev_timer_init (&repeate_watcher, repeate_cb, 5., 1.);
     ev_timer_start (loop, &repeate_watcher);
 
-    // 10秒后执行超时，设置为-1表示不退出
+    // 10秒后执行超时，设置为0表示不退出
     ev_timer_init (&timeout_watcher, timeout_cb, 10., 0.);
     ev_timer_start (loop, &timeout_watcher);
 

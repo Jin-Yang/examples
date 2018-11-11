@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello World</title>
+    <script src="build/react.js"></script>
+    <script src="build/react-dom.js"></script>
+    <script src="build/browser.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+class Title extends React.Component {
+  render() {
+    return (
+      <h1>
+        { this.props.text }
+        { this.props.children }
+      </h1>
+    );
+  }
+};
+
+class App extends React.Component {
+  render() {
+    return (
+      <Title text='Hello React'>
+        <span> community</span>
+      </Title>
+    );
+  }
+};
+
+
+
+    ReactDOM.render(
+        <App/>,
+        document.getElementById('root')
+    );
+    </script>
+  </body>
+</html>

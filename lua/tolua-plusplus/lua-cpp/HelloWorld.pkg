@@ -1,0 +1,24 @@
+$#include "HelloWorld.h"
+extern int g_Arr[10]@Arr;
+
+
+class CNumber {
+public:
+    CNumber();
+    CNumber(int num);
+    ~CNumber();
+    void SetNumber(int num);
+    int GetNumber();
+    int Add(int num);
+};
+
+class CMessage
+{
+public:
+    CMessage();
+    ~CMessage();
+    void SetMessage(char *msg);
+    char *GetMessage();
+    void ShowMessage();
+
+};

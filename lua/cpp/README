@@ -1,0 +1,2 @@
+basic.c
+    从sin读入lua程序，然后执行；通过Ctrl-D退出。
